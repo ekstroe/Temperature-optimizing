@@ -1,0 +1,74 @@
+#define VERSION 0.1
+
+/* 
+  Program to capture temperature from a TMP36 sensor and send reading through serial to computer for computing in python.
+  The program also displays last temperature reading and the lowest measured temperature on an LCD. 
+  The data is to be used to optimize heating of room. EkstroE
+*/
+
+// LCD 
+#import <LiquidCrystal.h>
+  const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+  LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+  int DataPin = A2;
+  double sensor_reading;
+  double temp = 0; // start temp
+  double maxtemp = -100; // starting at -100 so that the first measured value will be the max in the start
+  double mintemp = 100; // starting at 100 so that the first measured value will be the min in the start 
+
+void setup() {
+  // start serial, print startline
+  Serial.begin(9600);
+  Serial.println("Starting");
+
+  // set analog reference to 5V
+  analogReference(DEFAULT);
+
+  // start LCD
+  lcd.begin(16,2);
+  lcd.print("Hello");
+}
+
+ // function to print a string with ONE number to a 16x2 LCD screen
+ // str; the string to be printed, val; the number to include in the string
+ // line; the line where the string is to be printed, screen; the LCD screen
+void lcdPrint(char* str, double val, int line, LiquidCrystal screen){
+  lcd.setCursor(0,line);
+  char printline [16];
+  char tempbuf [10];
+  dtostrf(val, 4, 2, tempbuf);
+  sprintf(printline, str, tempbuf);
+  screen.print(printline);
+}
+
+void loop() {
+  // read data from sensor formula for reading the temperature : 
+  /*
+  T = ((ADC-value/1023)*V_ref-500mV)/10
+  V_ref = 5V
+  */
+
+  sensor_reading = analogRead(DataPin);
+  temp = (((sensor_reading/1023)*5)-0.5)/0.01;
+  
+  // print data to serial
+  Serial.println(temp);
+
+
+  // get max and min temperature
+  if (temp > maxtemp){
+    maxtemp = temp; 
+  }
+
+  if (temp < mintemp){
+    mintemp = temp;
+  }
+
+  // print to LCD:
+  lcd.clear();
+  lcdPrint("Cur temp: %s", temp, 0, lcd);
+  lcdPrint("Min temp: %s", mintemp, 1, lcd);
+  delay(1000*1);
+
+}
