@@ -1,0 +1,55 @@
+VERSION = "0.1"
+import time
+import matplotlib.pyplot as plt
+import serial
+import serial.tools.list_ports
+import numpy as np
+
+# List for holding the temperatures, another for indexes
+TList = []
+step = 1 # default 1 second step between new temperature
+
+# Make the plot update for each new number
+plt.ion()
+
+# Get list of ports
+ports = serial.tools.list_ports.comports()
+
+# print available ports for the user to make them choose the right port
+
+print(f"{'Device':<10}|Description")
+print("-" * 40)
+
+for port in ports:
+    print(f"{port.device:<10}|{port.description}")
+
+print("-" * 40)
+
+val = (int(input("Please choose the port you want to use, write the number of the port:")))
+
+# start serial with the chosen port 
+
+port = 'COM'+str(val)
+
+ser = serial.Serial(port, 9600, timeout=1)
+time.sleep(2)
+
+# first read line should be "Starting"
+
+if "Starting" in str(ser.readline()):
+    # program can be started
+    while True:
+        if ser.in_waiting > 0:
+            # read new temperature
+            new = float(ser.readline().decode('utf-8').strip())
+            TList.append(new)
+
+            # plot 
+            plt.plot(np.arange(0,len(TList),1),TList)
+            plt.show()
+            plt.ylim(0,40)
+            # pause to not make program overflow
+            plt.pause(0.25)
+            # print for debug
+            #line = str(ser.readline().decode('utf-8').strip())
+            #print(line)
